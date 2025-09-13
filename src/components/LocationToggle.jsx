@@ -79,10 +79,12 @@ export default function LocationToggle() {
     <button
       onClick={handleToggle}
       className="bg-yellow-200 text-gray-800 
-                 px-3 py-1 rounded-lg shadow text-sm font-medium 
-                 hover:bg-yellow-300 transition"
+                 px-2 sm:px-3 py-1 rounded-lg shadow text-xs sm:text-sm font-medium 
+                 hover:bg-yellow-300 transition-colors"
     >
-      📍 {loading ? "..." : city}
+      <span className="hidden sm:inline">📍 </span>
+      <span className="sm:hidden">📍</span>
+      {loading ? "..." : city}
     </button>
   );
 }

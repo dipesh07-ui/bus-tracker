@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { buses as initialBuses } from "../data/dummydata";
-
+import MapView from "./MapView";
 import React, { useState, useEffect } from "react";
 
 
@@ -9,6 +9,8 @@ export default function PassengerPage() {
   const [showMap, setShowMap] = useState(false);     // Map On/Off
   const [query, setQuery] = useState("");            // search input
   const [filtered, setFiltered] = useState(initialBuses);
+  const [isFullscreenMap, setIsFullscreenMap] = useState(false);
+  const [selectedBus, setSelectedBus] = useState(null);
 
   // Debounce filter so it doesn't run on every keystroke immediately
   useEffect(() => {
@@ -30,92 +32,134 @@ export default function PassengerPage() {
     return () => clearTimeout(t);
   }, [query]);
 
+  const handleBusClick = (bus) => {
+    setSelectedBus(bus);
+    setIsFullscreenMap(true);
+  };
+
+  const handleCloseFullscreen = () => {
+    setIsFullscreenMap(false);
+    setSelectedBus(null);
+  };
+
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-yellow-400 text-white p-4 text-center font-bold text-lg shadow">
-        Passenger Dashboard
+      <header className="bg-yellow-400 text-white p-3 sm:p-4 text-center font-bold text-lg shadow">
+        <h1 className="text-base sm:text-lg">Passenger Dashboard</h1>
       </header>
 
-      {/* Controls: search + bandwidth toggle */}
-      <div className="p-3 bg-white shadow flex items-center gap-3">
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search bus no. or route (e.g. 303 or A-37)..."
-          className="flex-1 p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400"
-        />
-        <button
-          onClick={() => setQuery("")}
-          className="px-3 py-2 text-sm text-gray-600 border rounded hover:bg-gray-100"
-        >
-          Clear
-        </button>
+      {/* Controls: search + map toggle */}
+      <div className="p-2 sm:p-3 bg-white shadow">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          {/* Search Input */}
+          <div className="flex-1 relative">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search bus no. or route..."
+              className="w-full p-2 sm:p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm sm:text-base"
+            />
+            {query && (
+              <button
+                onClick={() => setQuery("")}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
+            )}
+          </div>
 
-        <div className="flex items-center gap-2 ml-2">
-          {/* <span className="text-gray-700 text-sm">Low BW</span> */}
+          {/* Map Toggle Button */}
           <button
             onClick={() => setShowMap(!showMap)}
-            className={`px-3 py-1 rounded-full text-white font-semibold ${
-              showMap ? "bg-green-500" : "bg-gray-400"
+            className={`px-3 py-2 sm:py-3 rounded-lg text-white font-semibold text-sm sm:text-base transition-colors ${
+              showMap ? "bg-green-500 hover:bg-green-600" : "bg-gray-400 hover:bg-gray-500"
             }`}
           >
-            {showMap ? "Map On" : "Map Off"}
+            {showMap ? "🗺️ Map On" : "📋 List View"}
           </button>
         </div>
       </div>
 
-      {/* Main area: either map placeholder or light list */}
-      <div className="flex-1 bg-gray-200 flex items-center justify-center p-4">
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-hidden">
         {showMap ? (
-          <div className="w-full max-w-4xl h-full bg-white rounded-xl shadow-inner p-4 flex flex-col">
-            {/* Replace this placeholder with your map embed / component */}
-            <div className="flex-1 rounded-md border-2 border-dashed border-gray-200 flex items-center justify-center">
-              <p className="text-gray-500">🗺 Map Placeholder (shows {filtered.length} result(s))</p>
-            </div>
-
-            {/* quick list under the map */}
-            <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
-              {filtered.length ? (
-                filtered.map((b) => (
-                  <div key={b.id} className="p-3 border rounded-lg bg-gray-50">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-semibold text-gray-800">{b.route} • Bus {b.id}</p>
-                        <p className="text-sm text-gray-500">ETA: {b.eta}</p>
-                      </div>
-                      <button className="text-sm text-yellow-600 font-medium">Track</button>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="text-gray-500 p-3">No buses match your search.</p>
-              )}
+          // Map View
+          <div className="h-full p-2 sm:p-4">
+            <div className="w-full h-full bg-white rounded-xl shadow-lg overflow-hidden">
+              <MapView 
+                buses={filtered} 
+                onBusClick={handleBusClick}
+                isFullscreen={false}
+              />
             </div>
           </div>
         ) : (
-          // Lite mode: simple text-only list for low bandwidth
-          <div className="w-full max-w-md bg-white rounded-xl shadow-inner p-4">
-            <p className="text-gray-700 font-bold mb-3">Nearby Buses (Lite mode)</p>
-
-            <ul className="space-y-2 text-gray-700">
-              {filtered.length ? (
-                filtered.map((b) => (
-                  <li key={b.id} className="p-3 border rounded-lg flex justify-between items-center">
-                    <div>
-                      <div className="font-semibold">{b.route} • Bus {b.id}</div>
-                      <div className="text-sm text-gray-500">{b.eta}</div>
-                    </div>
-                    <div className="text-xs text-gray-400">▸</div>
-                  </li>
-                ))
-              ) : (
-                <li className="text-gray-500">No buses found for "{query}"</li>
-              )}
-            </ul>
+          // List View
+          <div className="h-full overflow-y-auto p-2 sm:p-4">
+            <div className="max-w-4xl mx-auto">
+              <div className="bg-white rounded-xl shadow-lg p-3 sm:p-4">
+                <h2 className="text-lg font-bold text-gray-800 mb-3 sm:mb-4">
+                  Nearby Buses ({filtered.length})
+                </h2>
+                
+                {filtered.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
+                    {filtered.map((bus) => (
+                      <div 
+                        key={bus.id} 
+                        className="p-3 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
+                        onClick={() => handleBusClick(bus)}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-lg">🚌</span>
+                              <p className="font-semibold text-gray-800 text-sm sm:text-base">
+                                {bus.route} • Bus {bus.id}
+                              </p>
+                            </div>
+                            <p className={`text-xs sm:text-sm font-medium ${
+                              bus.eta === 'Delayed' ? 'text-red-600' : 'text-gray-600'
+                            }`}>
+                              ETA: {bus.eta}
+                            </p>
+                          </div>
+                          <button className="text-yellow-600 hover:text-yellow-700 text-xs sm:text-sm font-medium ml-2">
+                            Track →
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-2">🚌</div>
+                    <p className="text-gray-500 text-sm sm:text-base">
+                      {query ? `No buses found for "${query}"` : "No buses available"}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>
+
+      {/* Fullscreen Map Modal */}
+      {isFullscreenMap && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4">
+          <div className="w-full h-full bg-white rounded-lg sm:rounded-xl overflow-hidden">
+            <MapView 
+              buses={filtered} 
+              onBusClick={handleBusClick}
+              isFullscreen={true}
+              onCloseFullscreen={handleCloseFullscreen}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

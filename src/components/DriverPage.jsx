@@ -92,16 +92,16 @@ export default function DriverPage() {
   if (!driverInfo || !myBus) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 flex justify-center">
-      <div className="bg-white shadow-xl rounded-2xl p-6 w-full max-w-lg">
+    <div className="min-h-screen bg-gray-50 p-3 sm:p-6 flex justify-center">
+      <div className="bg-white shadow-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-lg">
         {/* Profile Header */}
-        <div className="flex items-center gap-4 mb-6 border-b pb-4">
-          <div className="w-16 h-16 rounded-full bg-yellow-300 flex items-center justify-center text-2xl">
+        <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6 border-b pb-3 sm:pb-4">
+          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-yellow-300 flex items-center justify-center text-xl sm:text-2xl">
             👨‍✈️
           </div>
           <div>
-            <h1 className="text-xl font-bold">{driverInfo.name}</h1>
-            <p className="text-gray-600">Assigned Bus: {myBus.route}</p>
+            <h1 className="text-lg sm:text-xl font-bold">{driverInfo.name}</h1>
+            <p className="text-sm sm:text-base text-gray-600">Assigned Bus: {myBus.route}</p>
           </div>
         </div>
 
@@ -122,11 +122,11 @@ export default function DriverPage() {
         </div>
 
         {/* Start / End Buttons */}
-        <div className="flex gap-3 mb-6">
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 mb-4 sm:mb-6">
           <button
             onClick={handleStartTrip}
             disabled={status === "On Trip"}
-            className={`flex-1 px-4 py-2 rounded text-white ${
+            className={`flex-1 px-3 sm:px-4 py-2 sm:py-3 rounded text-white text-sm sm:text-base font-medium ${
               status === "On Trip"
                 ? "bg-green-300 cursor-not-allowed"
                 : "bg-green-500 hover:bg-green-600"
@@ -137,7 +137,7 @@ export default function DriverPage() {
           <button
             onClick={handleEndTrip}
             disabled={status === "Completed" || status === "Not Started"}
-            className={`flex-1 px-4 py-2 rounded text-white ${
+            className={`flex-1 px-3 sm:px-4 py-2 sm:py-3 rounded text-white text-sm sm:text-base font-medium ${
               status === "Completed" || status === "Not Started"
                 ? "bg-red-300 cursor-not-allowed"
                 : "bg-red-500 hover:bg-red-600"
