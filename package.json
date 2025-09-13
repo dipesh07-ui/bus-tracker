@@ -2,12 +2,14 @@
   "name": "bus-tracker",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://dipesh07-ui.github.io/bus-tracker/",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "gh-pages -d dist  "
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.7",

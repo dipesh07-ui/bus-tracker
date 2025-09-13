@@ -11,10 +11,15 @@ export default function LocationToggle() {
         `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
         {
           headers: {
-            "User-Agent": "MyBusApp/1.0 (your-email@example.com)", // required by Nominatim
+            "User-Agent": "MyBusApp/1.0 (contact@mybusapp.com)", // required by Nominatim
           },
         }
       );
+      
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      
       const data = await res.json();
 
       if (data?.address) {
@@ -29,7 +34,7 @@ export default function LocationToggle() {
         setCity("Unknown");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Location fetch error:", err);
       setCity("Error");
     }
   };
