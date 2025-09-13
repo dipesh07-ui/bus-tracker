@@ -1,3 +1,4 @@
+
 import { HashRouter as Router, Routes, Route } from "react-router-dom";
 import LandingPage from "./components/LandingPage";
 import PassengerPage from "./components/PassengerPage";
@@ -5,7 +6,8 @@ import DriverLogin from "./components/DriverLogin";
 import DriverPage from "./components/DriverPage";
 import ProtectedRoute from "./components/ProtectedRoute";
 import SplashScreen from "./components/SplashScreen";
-import Navbar from "./components/Navbar"; // ⬅️ import navbar
+import Navbar from "./components/Navbar";
+import PerformanceMonitor from "./components/PerformanceMonitor";
 import { useState } from "react";
 
 function App() {
@@ -17,6 +19,9 @@ function App() {
 
   return (
     <Router>
+      {/* Performance monitoring */}
+      <PerformanceMonitor />
+      
       {/* Navbar stays on top of all pages */}
       <Navbar />
 

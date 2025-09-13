@@ -1,7 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import React, { useEffect, useRef, useState, Suspense, lazy } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+
+// Lazy load heavy map components
+const MapContainer = lazy(() => import('react-leaflet').then(module => ({ default: module.MapContainer })));
+const TileLayer = lazy(() => import('react-leaflet').then(module => ({ default: module.TileLayer })));
+const Marker = lazy(() => import('react-leaflet').then(module => ({ default: module.Marker })));
+const Popup = lazy(() => import('react-leaflet').then(module => ({ default: module.Popup })));
 
 // Fix for default markers in react-leaflet
 delete L.Icon.Default.prototype._getIconUrl;
@@ -96,42 +101,51 @@ export default function MapView({ buses, onBusClick, isFullscreen = false, onClo
       )}
       
       <div className="w-full h-full">
-        <MapContainer
-          center={mapCenter}
-          zoom={13}
-          className="w-full h-full rounded-lg"
-          ref={mapRef}
-          style={{ height: '100%', width: '100%' }}
-        >
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          
-          {buses.map((bus) => (
-            <Marker
-              key={bus.id}
-              position={[bus.lat, bus.lng]}
-              icon={createBusIcon(bus.eta === 'Delayed' ? '#EF4444' : '#FCD34D')}
-              eventHandlers={{
-                click: () => handleBusClick(bus),
-              }}
-            >
-              <Popup>
-                <div className="p-2">
-                  <h3 className="font-bold text-lg">{bus.route} • Bus {bus.id}</h3>
-                  <p className="text-sm text-gray-600">ETA: {bus.eta}</p>
-                  <button 
-                    className="mt-2 bg-yellow-400 text-white px-3 py-1 rounded text-sm hover:bg-yellow-500 transition-colors"
-                    onClick={() => handleBusClick(bus)}
-                  >
-                    Track Bus
-                  </button>
-                </div>
-              </Popup>
-            </Marker>
-          ))}
-        </MapContainer>
+        <Suspense fallback={
+          <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-yellow-400 mx-auto mb-2"></div>
+              <p className="text-gray-600 text-sm">Loading map...</p>
+            </div>
+          </div>
+        }>
+          <MapContainer
+            center={mapCenter}
+            zoom={13}
+            className="w-full h-full rounded-lg"
+            ref={mapRef}
+            style={{ height: '100%', width: '100%' }}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            
+            {buses.map((bus) => (
+              <Marker
+                key={bus.id}
+                position={[bus.lat, bus.lng]}
+                icon={createBusIcon(bus.eta === 'Delayed' ? '#EF4444' : '#FCD34D')}
+                eventHandlers={{
+                  click: () => handleBusClick(bus),
+                }}
+              >
+                <Popup>
+                  <div className="p-2">
+                    <h3 className="font-bold text-lg">{bus.route} • Bus {bus.id}</h3>
+                    <p className="text-sm text-gray-600">ETA: {bus.eta}</p>
+                    <button 
+                      className="mt-2 bg-yellow-400 text-white px-3 py-1 rounded text-sm hover:bg-yellow-500 transition-colors"
+                      onClick={() => handleBusClick(bus)}
+                    >
+                      Track Bus
+                    </button>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        </Suspense>
       </div>
     </div>
   );

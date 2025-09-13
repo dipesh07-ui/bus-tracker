@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { buses as initialBuses } from "../data/dummydata";
 import MapView from "./MapView";
-import MapTest from "./MapTest";
 import BackButton from "./BackButton";
 import React, { useState, useEffect } from "react";
 
