@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { drivers, buses } from "../data/dummydata";
+import BackButton from "./BackButton";
 
 export default function DriverPage() {
   const navigate = useNavigate();
@@ -92,8 +93,14 @@ export default function DriverPage() {
   if (!driverInfo || !myBus) return null;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-3 sm:p-6 flex justify-center">
-      <div className="bg-white shadow-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-lg">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-100 via-white to-yellow-50">
+      {/* Header with back button */}
+      <div className="p-4 sm:p-6">
+        <BackButton to="/" />
+      </div>
+
+      <div className="flex justify-center px-4 sm:px-6 pb-6">
+        <div className="bg-white shadow-xl rounded-xl sm:rounded-2xl p-4 sm:p-6 w-full max-w-lg">
         {/* Profile Header */}
         <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6 border-b pb-3 sm:pb-4">
           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-yellow-300 flex items-center justify-center text-xl sm:text-2xl">
@@ -173,6 +180,7 @@ export default function DriverPage() {
         >
           🚪 Logout
         </button>
+        </div>
       </div>
     </div>
   );

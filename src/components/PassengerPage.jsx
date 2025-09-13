@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { buses as initialBuses } from "../data/dummydata";
 import MapView from "./MapView";
 import MapTest from "./MapTest";
+import BackButton from "./BackButton";
 import React, { useState, useEffect } from "react";
 
 
@@ -46,8 +47,12 @@ export default function PassengerPage() {
   return (
     <div className="flex flex-col h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-yellow-400 text-white p-3 sm:p-4 text-center font-bold text-lg shadow">
-        <h1 className="text-base sm:text-lg">Passenger Dashboard</h1>
+      <header className="bg-yellow-400 text-white p-3 sm:p-4 shadow">
+        <div className="flex items-center justify-between">
+          <BackButton to="/" className="text-white hover:text-gray-200 hover:bg-yellow-500" />
+          <h1 className="text-base sm:text-lg font-bold">Passenger Dashboard</h1>
+          <div className="w-16"></div> {/* Spacer for centering */}
+        </div>
       </header>
 
       {/* Controls: search + map toggle */}
@@ -89,7 +94,11 @@ export default function PassengerPage() {
           // Map View
           <div className="h-full p-2 sm:p-4">
             <div className="w-full h-full bg-white rounded-xl shadow-lg overflow-hidden">
-              <MapTest />
+              <MapView 
+                buses={filtered} 
+                onBusClick={handleBusClick}
+                isFullscreen={false}
+              />
             </div>
           </div>
         ) : (
