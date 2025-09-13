@@ -11,6 +11,11 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
 });
 
+// Ensure Leaflet is available
+if (typeof window !== 'undefined') {
+  window.L = L;
+}
+
 // Custom bus icon
 const createBusIcon = (color = '#FCD34D') => {
   return L.divIcon({
@@ -41,6 +46,7 @@ const createBusIcon = (color = '#FCD34D') => {
 export default function MapView({ buses, onBusClick, isFullscreen = false, onCloseFullscreen }) {
   const mapRef = useRef(null);
   const [mapCenter, setMapCenter] = useState([19.0760, 72.8777]); // Mumbai coordinates
+  const [mapError, setMapError] = useState(null);
 
   useEffect(() => {
     // Get user's current location if available
@@ -63,6 +69,19 @@ export default function MapView({ buses, onBusClick, isFullscreen = false, onClo
     }
   };
 
+  // Error boundary for map rendering
+  if (mapError) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="text-center p-4">
+          <div className="text-4xl mb-2">🗺️</div>
+          <p className="text-gray-600 mb-2">Map temporarily unavailable</p>
+          <p className="text-sm text-gray-500">Showing {buses.length} buses</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'w-full h-full'}`}>
       {isFullscreen && (
@@ -76,41 +95,44 @@ export default function MapView({ buses, onBusClick, isFullscreen = false, onClo
         </div>
       )}
       
-      <MapContainer
-        center={mapCenter}
-        zoom={13}
-        className="w-full h-full rounded-lg"
-        ref={mapRef}
-      >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-        
-        {buses.map((bus) => (
-          <Marker
-            key={bus.id}
-            position={[bus.lat, bus.lng]}
-            icon={createBusIcon(bus.eta === 'Delayed' ? '#EF4444' : '#FCD34D')}
-            eventHandlers={{
-              click: () => handleBusClick(bus),
-            }}
-          >
-            <Popup>
-              <div className="p-2">
-                <h3 className="font-bold text-lg">{bus.route} • Bus {bus.id}</h3>
-                <p className="text-sm text-gray-600">ETA: {bus.eta}</p>
-                <button 
-                  className="mt-2 bg-yellow-400 text-white px-3 py-1 rounded text-sm hover:bg-yellow-500 transition-colors"
-                  onClick={() => handleBusClick(bus)}
-                >
-                  Track Bus
-                </button>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
-      </MapContainer>
+      <div className="w-full h-full">
+        <MapContainer
+          center={mapCenter}
+          zoom={13}
+          className="w-full h-full rounded-lg"
+          ref={mapRef}
+          style={{ height: '100%', width: '100%' }}
+        >
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+          
+          {buses.map((bus) => (
+            <Marker
+              key={bus.id}
+              position={[bus.lat, bus.lng]}
+              icon={createBusIcon(bus.eta === 'Delayed' ? '#EF4444' : '#FCD34D')}
+              eventHandlers={{
+                click: () => handleBusClick(bus),
+              }}
+            >
+              <Popup>
+                <div className="p-2">
+                  <h3 className="font-bold text-lg">{bus.route} • Bus {bus.id}</h3>
+                  <p className="text-sm text-gray-600">ETA: {bus.eta}</p>
+                  <button 
+                    className="mt-2 bg-yellow-400 text-white px-3 py-1 rounded text-sm hover:bg-yellow-500 transition-colors"
+                    onClick={() => handleBusClick(bus)}
+                  >
+                    Track Bus
+                  </button>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
+      </div>
     </div>
   );
 }
