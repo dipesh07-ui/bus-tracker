@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { buses as initialBuses } from "../data/dummydata";
 import MapView from "./MapView";
+import MapTest from "./MapTest";
 import React, { useState, useEffect } from "react";
 
 
@@ -88,11 +89,7 @@ export default function PassengerPage() {
           // Map View
           <div className="h-full p-2 sm:p-4">
             <div className="w-full h-full bg-white rounded-xl shadow-lg overflow-hidden">
-              <MapView 
-                buses={filtered} 
-                onBusClick={handleBusClick}
-                isFullscreen={false}
-              />
+              <MapTest />
             </div>
           </div>
         ) : (
