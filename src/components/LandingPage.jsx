@@ -56,8 +56,21 @@ export default function LandingPage() {
       </div>
 
       {/* Footer */}
-      <footer className="bg-gray-100 text-gray-600 text-center py-3 sm:py-4 text-xs sm:text-sm mt-6 sm:mt-10">
-        © 2025 MyBusApp. All rights reserved.
+      <footer className="bg-transparent text-left py-10 sm:py-14 mt-6 sm:mt-16 px-8 sm:px-14 lg:px-20">
+        <div className="max-w-5xl">
+          <p className="text-gray-300 font-extrabold text-3xl sm:text-5xl leading-tight tracking-tight">
+            Making
+          </p>
+          <p className="text-gray-300 font-extrabold text-3xl sm:text-5xl leading-tight tracking-tight">
+            Every Journey
+          </p>
+          <p className="text-gray-300 font-extrabold text-3xl sm:text-5xl leading-tight tracking-tight">
+            Smoother
+          </p>
+          <p className="mt-4 sm:mt-6 text-gray-500 font-semibold text-base sm:text-lg">
+            Crafted with love <span className="align-middle">💛</span>
+          </p>
+        </div>
       </footer>
     </div>
   );

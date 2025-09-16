@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+// Imports resolved after merge: removed conflicting unused imports
 import MapView from "./MapView";
 import BackButton from "./BackButton";
 import React, { useState, useEffect } from "react";
@@ -57,7 +57,6 @@ export default function PassengerPage() {
 
   const handleBusClick = (bus) => {
     setSelectedBus(bus);
-    setIsFullscreenMap(true);
   };
 
   const handleCloseFullscreen = () => {
@@ -214,6 +213,52 @@ export default function PassengerPage() {
           </div>
         )}
       </div>
+
+      {/* Bus Details Overlay */}
+      {selectedBus && (
+        <div className="fixed inset-0 z-50 bg-black bg-opacity-40 flex items-end sm:items-center justify-center p-2 sm:p-4">
+          <div className="w-full sm:max-w-md bg-white rounded-t-xl sm:rounded-2xl shadow-xl p-4 sm:p-6">
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="text-lg sm:text-xl font-bold text-gray-800">Bus {selectedBus.id}</h3>
+              <button
+                onClick={() => setSelectedBus(null)}
+                className="text-gray-500 hover:text-gray-700 text-xl leading-none"
+                aria-label="Close"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-2 text-sm sm:text-base text-gray-700">
+              <p><span className="font-semibold">Route:</span> {selectedBus.route}</p>
+              <p>
+                <span className="font-semibold">ETA:</span>{" "}
+                <span className={selectedBus.eta === 'Delayed' ? 'text-red-600 font-semibold' : 'text-gray-700'}>
+                  {selectedBus.eta}
+                </span>
+              </p>
+            </div>
+
+            {/* <div className="mt-4 flex gap-2">
+              <button
+                onClick={() => {
+                  setIsFullscreenMap(true);
+                }}
+                className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-white font-semibold py-2 rounded-lg"
+              >
+                Track on Map
+              </button>
+
+              <button
+                onClick={() => setSelectedBus(null)}
+                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
+              >
+                Close
+              </button>
+            </div> */}
+
+          </div>
+        </div>
+      )}
 
       {/* Fullscreen Map Modal */}
       {isFullscreenMap && (
