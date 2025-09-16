@@ -116,4 +116,24 @@ router.post('/dev/seed', (req, res) => {
   res.json({ status: 'seeded', count: samples.length });
 });
 
+// Convenience GET for seeding via browser
+router.get('/dev/seed', (req, res) => {
+  const now = new Date().toISOString();
+  // Reuse existing samples from POST handler for consistency
+  const samples = Array.from([
+    { bus_id: '703', route_id: 'A-703', last_lat: 19.0896, last_lng: 72.8656, speed_kmph: 30, heading_deg: 90 },
+    { bus_id: '22',  route_id: '22',   last_lat: 19.0812, last_lng: 72.8691, speed_kmph: 24, heading_deg: 45 },
+    { bus_id: 'A-37',route_id: 'A-37', last_lat: 19.0750, last_lng: 72.8722, speed_kmph:  0, heading_deg: 0  },
+    { bus_id: '71',  route_id: '71',   last_lat: 19.0722, last_lng: 72.8801, speed_kmph: 18, heading_deg: 270 },
+    { bus_id: '11',  route_id: '11',   last_lat: 19.0920, last_lng: 72.8610, speed_kmph: 20, heading_deg: 180 },
+    { bus_id: '15',  route_id: '15',   last_lat: 19.1010, last_lng: 72.8830, speed_kmph: 26, heading_deg: 210 },
+    { bus_id: '501', route_id: '501',  last_lat: 19.0610, last_lng: 72.8910, speed_kmph: 22, heading_deg: 120 },
+    { bus_id: '66',  route_id: '66',   last_lat: 19.0860, last_lng: 72.8710, speed_kmph: 16, heading_deg: 60  },
+  ]);
+  samples.forEach((s) => {
+    busStore.set(s.bus_id, { ...s, updated_at: now });
+  });
+  res.json({ status: 'seeded', count: samples.length, method: 'GET' });
+});
+
 export default router;
