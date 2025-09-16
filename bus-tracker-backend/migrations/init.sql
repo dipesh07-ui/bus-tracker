@@ -1,0 +1,5 @@
+CREATE TABLE IF NOT EXISTS buses (
+  id TEXT PRIMARY KEY,
+  lat REAL,
+  lng REAL
+);

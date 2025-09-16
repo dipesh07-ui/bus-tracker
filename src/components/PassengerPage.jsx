@@ -1,37 +1,59 @@
 import { Link } from "react-router-dom";
-import { buses as initialBuses } from "../data/dummydata";
 import MapView from "./MapView";
 import BackButton from "./BackButton";
 import React, { useState, useEffect } from "react";
-
-
+import { API_BASE_URL } from "../config";
 
 export default function PassengerPage() {
-  const [showMap, setShowMap] = useState(false);     // Map On/Off
-  const [query, setQuery] = useState("");            // search input
-  const [filtered, setFiltered] = useState(initialBuses);
+  const [showMap, setShowMap] = useState(false);
+  const [query, setQuery] = useState("");
+  const [buses, setBuses] = useState([]);
+  const [filtered, setFiltered] = useState([]);
   const [isFullscreenMap, setIsFullscreenMap] = useState(false);
   const [selectedBus, setSelectedBus] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Debounce filter so it doesn't run on every keystroke immediately
+  useEffect(() => {
+    const fetchBuses = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/buses`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch bus data');
+        }
+        const data = await response.json();
+        setBuses(data.buses);
+        setFiltered(data.buses);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBuses();
+    // Refresh bus data every 10 seconds
+    const interval = setInterval(fetchBuses, 10000); 
+    return () => clearInterval(interval);
+  }, []);
+
   useEffect(() => {
     const q = query.trim().toLowerCase();
     const t = setTimeout(() => {
-      if (!q) {
-        setFiltered(initialBuses);
-        return;
-      }
-      // match by id or route (case-insensitive)
-      const result = initialBuses.filter((b) => {
-        return (
-          b.id.toLowerCase().includes(q) ||
-          (b.route && b.route.toLowerCase().includes(q))
-        );
-      });
-      setFiltered(result);
-    }, 180); // 180ms debounce
+        if (!q) {
+            setFiltered(buses);
+            return;
+        }
+        const result = buses.filter((b) => {
+            return (
+                String(b.id).toLowerCase().includes(q) ||
+                (b.route && b.route.toLowerCase().includes(q))
+            );
+        });
+        setFiltered(result);
+    }, 180);
     return () => clearTimeout(t);
-  }, [query]);
+  }, [query, buses]);
 
   const handleBusClick = (bus) => {
     setSelectedBus(bus);
@@ -42,6 +64,47 @@ export default function PassengerPage() {
     setIsFullscreenMap(false);
     setSelectedBus(null);
   };
+
+  if (loading) {
+    return (
+      <div className="flex flex-col h-screen bg-gray-50">
+        <header className="bg-yellow-400 text-white p-3 sm:p-4 shadow">
+          <div className="flex items-center justify-between">
+            <BackButton to="/" className="text-white hover:text-gray-200 hover:bg-yellow-500" />
+            <h1 className="text-base sm:text-lg font-bold">Passenger Dashboard</h1>
+            <div className="w-16"></div>
+          </div>
+        </header>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading bus data...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col h-screen bg-gray-50">
+        <header className="bg-yellow-400 text-white p-3 sm:p-4 shadow">
+          <div className="flex items-center justify-between">
+            <BackButton to="/" className="text-white hover:text-gray-200 hover:bg-yellow-500" />
+            <h1 className="text-base sm:text-lg font-bold">Passenger Dashboard</h1>
+            <div className="w-16"></div>
+          </div>
+        </header>
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
+            <h2 className="font-bold mb-2">Something went wrong</h2>
+            <p>{error}</p>
+            <p className="mt-2 text-sm">Please try again later.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-screen bg-gray-50">
@@ -128,7 +191,7 @@ export default function PassengerPage() {
                             <p className={`text-xs sm:text-sm font-medium ${
                               bus.eta === 'Delayed' ? 'text-red-600' : 'text-gray-600'
                             }`}>
-                              ETA: {bus.eta}
+                              ETA: {bus.eta || 'N/A'}
                             </p>
                           </div>
                           <button className="text-yellow-600 hover:text-yellow-700 text-xs sm:text-sm font-medium ml-2">
@@ -142,7 +205,7 @@ export default function PassengerPage() {
                   <div className="text-center py-8">
                     <div className="text-4xl mb-2">🚌</div>
                     <p className="text-gray-500 text-sm sm:text-base">
-                      {query ? `No buses found for "${query}"` : "No buses available"}
+                      {query ? `No buses found for \"${query}\"` : "No buses available"}
                     </p>
                   </div>
                 )}
@@ -157,7 +220,7 @@ export default function PassengerPage() {
         <div className="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4">
           <div className="w-full h-full bg-white rounded-lg sm:rounded-xl overflow-hidden">
             <MapView 
-              buses={filtered} 
+              buses={selectedBus ? [selectedBus] : filtered} 
               onBusClick={handleBusClick}
               isFullscreen={true}
               onCloseFullscreen={handleCloseFullscreen}
