@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState, Suspense, lazy } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -51,7 +52,6 @@ const createBusIcon = (color = '#FCD34D') => {
 export default function MapView({ buses, onBusClick, isFullscreen = false, onCloseFullscreen }) {
   const mapRef = useRef(null);
   const [mapCenter, setMapCenter] = useState([19.0760, 72.8777]); // Mumbai coordinates
-  const [mapError, setMapError] = useState(null);
 
   useEffect(() => {
     // Get user's current location if available
@@ -73,19 +73,6 @@ export default function MapView({ buses, onBusClick, isFullscreen = false, onClo
       onBusClick(bus);
     }
   };
-
-  // Error boundary for map rendering
-  if (mapError) {
-    return (
-      <div className="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
-        <div className="text-center p-4">
-          <div className="text-4xl mb-2">🗺️</div>
-          <p className="text-gray-600 mb-2">Map temporarily unavailable</p>
-          <p className="text-sm text-gray-500">Showing {buses.length} buses</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-white' : 'w-full h-full'}`}>
@@ -133,7 +120,17 @@ export default function MapView({ buses, onBusClick, isFullscreen = false, onClo
                 <Popup>
                   <div className="p-2">
                     <h3 className="font-bold text-lg">{bus.route} • Bus {bus.id}</h3>
-                    <p className="text-sm text-gray-600">ETA: {bus.eta}</p>
+                    <p className="text-sm text-gray-700"><span className="font-semibold">ETA:</span> {bus.eta || 'N/A'}</p>
+                    {bus.next_stop && (
+                      <p className="text-sm text-gray-700"><span className="font-semibold">Next stop:</span> {bus.next_stop}</p>
+                    )}
+                    {bus.upcoming_stops && bus.upcoming_stops.length > 0 && (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {bus.upcoming_stops.map((s, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border text-xs">{s}</span>
+                        ))}
+                      </div>
+                    )}
                     <button 
                       className="mt-2 bg-yellow-400 text-white px-3 py-1 rounded text-sm hover:bg-yellow-500 transition-colors"
                       onClick={() => handleBusClick(bus)}

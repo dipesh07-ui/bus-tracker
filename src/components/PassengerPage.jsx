@@ -13,29 +13,61 @@ export default function PassengerPage() {
   const [selectedBus, setSelectedBus] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [seedTried, setSeedTried] = useState(false);
 
   useEffect(() => {
+    const fetchWithTimeout = (url, options = {}, ms = 35000) => {
+      const c = new AbortController();
+      const id = setTimeout(() => c.abort(), ms);
+      return fetch(url, { ...options, signal: c.signal })
+        .finally(() => clearTimeout(id));
+    };
+
     const fetchBuses = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/buses`);
+        const response = await fetchWithTimeout(`${API_BASE_URL}/public/all-buses`);
         if (!response.ok) {
-          throw new Error('Failed to fetch bus data');
+          const msg = await response.text();
+          throw new Error(msg || `Failed to fetch bus data (${response.status})`);
         }
         const data = await response.json();
-        setBuses(data.buses);
-        setFiltered(data.buses);
+        const normalized = Array.isArray(data) ? data.map((row) => ({
+          id: row.bus_id ?? row.id,
+          route: row.route_id ?? row.route ?? "",
+          lat: row.last_lat ?? row.lat,
+          lng: row.last_lng ?? row.lng,
+          eta: row.eta ?? 'N/A',
+        })) : (data.buses || []);
+
+        // If no buses returned, auto-seed once in production demo
+        if (!seedTried && normalized.length === 0) {
+          try {
+            setSeedTried(true);
+            const seedRes = await fetchWithTimeout(`${API_BASE_URL}/dev/seed`, { method: 'POST' }, 15000);
+            if (seedRes.ok) {
+              // brief pause, then refetch
+              await new Promise(r => setTimeout(r, 800));
+              return fetchBuses();
+            }
+          } catch (_) {}
+        }
+
+        setBuses(normalized);
+        setFiltered(normalized);
+        setError(null);
       } catch (err) {
-        setError(err.message);
+        setError(err.name === 'AbortError' ? 'Backend is waking up… please wait' : (err.message || 'Unable to fetch bus data'));
       } finally {
         setLoading(false);
       }
     };
 
+    // Start with map view by default for clarity
+    setShowMap(true);
     fetchBuses();
-    // Refresh bus data every 10 seconds
-    const interval = setInterval(fetchBuses, 10000); 
+    const interval = setInterval(fetchBuses, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [seedTried]);
 
   useEffect(() => {
     const q = query.trim().toLowerCase();
@@ -62,6 +94,20 @@ export default function PassengerPage() {
   const handleCloseFullscreen = () => {
     setIsFullscreenMap(false);
     setSelectedBus(null);
+  };
+
+  const manualSeed = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch(`${API_BASE_URL}/dev/seed`, { method: 'POST' });
+      if (res.ok) {
+        await new Promise(r => setTimeout(r, 500));
+      }
+    } finally {
+      setSeedTried(true);
+      setLoading(false);
+    }
   };
 
   if (loading) {
@@ -98,7 +144,7 @@ export default function PassengerPage() {
           <div className="text-center p-4 bg-red-100 border border-red-400 text-red-700 rounded-lg">
             <h2 className="font-bold mb-2">Something went wrong</h2>
             <p>{error}</p>
-            <p className="mt-2 text-sm">Please try again later.</p>
+            <p className="mt-2 text-sm">The backend may be waking up. It will retry automatically.</p>
           </div>
         </div>
       </div>
@@ -153,8 +199,8 @@ export default function PassengerPage() {
       <div className="flex-1 overflow-hidden">
         {showMap ? (
           // Map View
-          <div className="h-full p-2 sm:p-4">
-            <div className="w-full h-full bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="p-2 sm:p-4">
+            <div className="w-full h-[70vh] sm:h-[75vh] bg-white rounded-xl shadow-lg overflow-hidden">
               <MapView 
                 buses={filtered} 
                 onBusClick={handleBusClick}
@@ -175,7 +221,7 @@ export default function PassengerPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-3">
                     {filtered.map((bus) => (
                       <div 
-                        key={bus.id} 
+                        key={`${bus.id}-${bus.route}`}
                         className="p-3 border rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer"
                         onClick={() => handleBusClick(bus)}
                       >
@@ -192,6 +238,16 @@ export default function PassengerPage() {
                             }`}>
                               ETA: {bus.eta || 'N/A'}
                             </p>
+                            {bus.next_stop && (
+                              <p className="text-xs text-gray-600 mt-1">Next: {bus.next_stop}</p>
+                            )}
+                            {bus.upcoming_stops && bus.upcoming_stops.length > 0 && (
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {bus.upcoming_stops.map((s, i) => (
+                                  <span key={i} className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 border text-[10px]">{s}</span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                           <button className="text-yellow-600 hover:text-yellow-700 text-xs sm:text-sm font-medium ml-2">
                             Track →
@@ -204,8 +260,9 @@ export default function PassengerPage() {
                   <div className="text-center py-8">
                     <div className="text-4xl mb-2">🚌</div>
                     <p className="text-gray-500 text-sm sm:text-base">
-                      {query ? `No buses found for \"${query}\"` : "No buses available"}
+                      {query ? `No buses found for "${query}"` : "No buses available"}
                     </p>
+                    <button onClick={manualSeed} className="mt-3 px-3 py-2 rounded bg-yellow-400 hover:bg-yellow-500 text-white text-sm">Load sample buses</button>
                   </div>
                 )}
               </div>
@@ -237,24 +294,6 @@ export default function PassengerPage() {
                 </span>
               </p>
             </div>
-
-            {/* <div className="mt-4 flex gap-2">
-              <button
-                onClick={() => {
-                  setIsFullscreenMap(true);
-                }}
-                className="flex-1 bg-yellow-400 hover:bg-yellow-500 text-white font-semibold py-2 rounded-lg"
-              >
-                Track on Map
-              </button>
-
-              <button
-                onClick={() => setSelectedBus(null)}
-                className="px-4 py-2 rounded-lg border border-gray-200 text-gray-700 hover:bg-gray-50"
-              >
-                Close
-              </button>
-            </div> */}
 
           </div>
         </div>
