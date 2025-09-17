@@ -18,6 +18,18 @@ const routeCenters = new Map([
   ['66',   { lat: 19.085, lng: 72.87  }],
 ]);
 
+// Simple stops per route (demo)
+const routeStops = new Map([
+  ['A-703', ['Main St', 'Central Park', 'City Mall', 'Airport']],
+  ['22',    ['Depot', 'Market', 'College', 'Stadium']],
+  ['A-37',  ['Harbor', 'Old Town', 'Tech Park', 'Zoo']],
+  ['71',    ['Hill Top', 'Library', 'Museum', 'Downtown']],
+  ['11',    ['Riverside', 'Temple', 'Court', 'Garden']],
+  ['15',    ['Lakeside', 'Station', 'Plaza', 'Arena']],
+  ['501',   ['Bridge', 'Industrial', 'University', 'Terminal']],
+  ['66',    ['Fort', 'Bazaar', 'Hospital', 'Beach']],
+]);
+
 function haversineKm(a, b) {
   const R = 6371;
   const dLat = (b.lat - a.lat) * Math.PI / 180;
@@ -40,6 +52,15 @@ function computeEtaString(row) {
   if (minutes <= 1) return 'Arriving';
   if (minutes < 5) return `${minutes} min`;
   return `${minutes} mins`;
+}
+
+function enrichRow(row) {
+  const eta = computeEtaString(row);
+  const stops = routeStops.get(String(row.route_id)) || [];
+  // naive pick: next stop based on heading/time; fallback to first
+  const next_stop = stops[0] || null;
+  const upcoming_stops = stops.slice(0, 3);
+  return { ...row, eta, next_stop, upcoming_stops };
 }
 
 // Middleware to check for API key (optional in dev if not set)
@@ -85,8 +106,8 @@ router.get('/public/all-buses', async (req, res) => {
     const windowMs = parseInt(recentSec, 10) * 1000;
     rows = rows.filter((r) => now - Date.parse(r.updated_at) <= windowMs);
   }
-  const withEta = rows.map(r => ({ ...r, eta: computeEtaString(r) }));
-  res.json(withEta);
+  const withMeta = rows.map(enrichRow);
+  res.json(withMeta);
 });
 
 router.get('/public/bus/:busId', async (req, res) => {
@@ -94,7 +115,7 @@ router.get('/public/bus/:busId', async (req, res) => {
   if (!row) {
     return res.status(404).json({ error: 'Bus not found' });
   }
-  res.json({ ...row, eta: computeEtaString(row) });
+  res.json(enrichRow(row));
 });
 
 // Dev-only: seed sample buses (expanded)
